@@ -1,22 +1,23 @@
+from django.db.models import Prefetch
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter, SearchFilter
-from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveAPIView
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework import generics
 
-from . import models
-from . import serializers
-from .filters import ProductFilter
-from .paginations import DefaultPagination
+from store import models
+from store import serializers
+from store.filters import ProductFilter
+from store.paginations import DefaultPagination
 
 
-class CategoryViewSet(ReadOnlyModelViewSet):
+class CategoryList(generics.ListAPIView):
     serializer_class = serializers.CategorySerializer
-    queryset = models.Category.objects.all()
+    queryset = models.Category.objects.all().order_by('title')
 
 
-class ProductList(ListAPIView):
+class ProductList(generics.ListAPIView):
     serializer_class = serializers.ProductSerializer
-    queryset = models.Product.objects.all()
+    queryset = models.Product.objects.select_related('category') \
+            .order_by('-created_at')
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
     search_fields = ['title']
     filterset_class = ProductFilter
@@ -24,18 +25,53 @@ class ProductList(ListAPIView):
     pagination_class = DefaultPagination
 
 
-class ProductDetail(RetrieveAPIView):
-    serializer_class = serializers.ProductSerializer
-    queryset = models.Product.objects.all()
+class ProductDetail(generics.RetrieveAPIView):
+    serializer_class = serializers.ProductDetailSerializer
+    queryset = models.Product.objects.select_related('category')
+    lookup_field = 'slug'
 
 
-class CommentList(ListCreateAPIView):
+class CommentList(generics.ListCreateAPIView):
     serializer_class = serializers.CommentSerializer
 
     def get_queryset(self):
-        product_id = self.kwargs['pk']
-        return models.Comment.objects.filter(product_id=product_id)
+        product_slug = self.kwargs['slug']
+        return models.Comment.objects.filter(product__slug=product_slug) \
+            .order_by('-created_at')
 
     def get_serializer_context(self):
-        product_id = self.kwargs['pk']
-        return {'product_id': product_id}
+        product_slug = self.kwargs['slug']
+        return {'product_slug': product_slug}
+
+
+class CartList(generics.CreateAPIView):
+    serializer_class = serializers.CartSerializer
+    queryset = models.Cart.objects.all()
+
+
+class CartDetail(generics.RetrieveDestroyAPIView):
+    serializer_class = serializers.CartSerializer
+
+    def get_queryset(self):
+        return models.Cart.objects.prefetch_related(
+            Prefetch(
+                'items',
+                queryset=models.CartItem.objects.select_related('product')
+            )
+        )
+
+
+class CartItemList(generics.ListCreateAPIView):
+    def get_queryset(self):
+        cart_id = self.kwargs['pk']
+        return models.CartItem.objects.filter(cart_id=cart_id) \
+            .select_related('product')
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return serializers.CartItemCreateSerializer
+        return serializers.CartItemSerializer
+
+    def get_serializer_context(self):
+        cart_id = self.kwargs['pk']
+        return {'cart_id': cart_id}
