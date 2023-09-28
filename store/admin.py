@@ -1,8 +1,5 @@
-from typing import Any
 from django.contrib import admin
 from django.db.models import Count, DecimalField, ExpressionWrapper, F, Sum
-from django.db.models.query import QuerySet
-from django.http.request import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.http import urlencode
@@ -22,6 +19,7 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display_links = ['id', 'title']
     list_per_page = 10
     search_fields = ['title__istartswith']
+    ordering = ['title']
 
     def get_queryset(self, request):
         return super().get_queryset(request) \
@@ -155,10 +153,24 @@ class AddressInline(admin.TabularInline):
 
 @admin.register(models.Customer)
 class CustomerAdmin(admin.ModelAdmin):
-    list_display = ['id', 'first_name', 'last_name', 'email']
+    list_display = ['email', 'first_name', 'last_name']
+    list_display_links = ['email']
     list_per_page = 10
-    search_fields = ['first_name__istartswith', 'last_name__istartswith']
+    search_fields = [
+        'user__first_name__istartswith',
+        'user__last_name__istartswith'
+    ]
+    ordering = ['user__last_name', 'user__first_name']
     inlines = [AddressInline]
+
+    def first_name(self, customer):
+        return customer.user.first_name
+
+    def last_name(self, customer):
+        return customer.user.last_name
+
+    def email(self, customer):
+        return customer.user.email
 
 
 @admin.register(models.Address)

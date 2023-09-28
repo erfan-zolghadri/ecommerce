@@ -52,6 +52,7 @@ class CartList(generics.CreateAPIView):
 
 class CartDetail(generics.RetrieveDestroyAPIView):
     serializer_class = serializers.CartSerializer
+    lookup_value_regex = '[0-9a-fA-F]{8}\-?[0-9a-fA-F]{4}\-?[0-9a-fA-F]{4}\-?[0-9a-fA-F]{4}\-?[0-9a-fA-F]{12}'
 
     def get_queryset(self):
         return models.Cart.objects.prefetch_related(

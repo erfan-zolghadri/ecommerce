@@ -84,75 +84,75 @@ class Command(BaseCommand):
         print('Done')
 
         # Generate customers
-        print(f'Inserting {CUSTOMERS_COUNT} customers...', end='')
-        customers = [
-            (factories.CustomerFactory() \
-            if (random.random() > 0.3) \
-            else factories.CustomerFactory(birth_date=None)) \
-            for _ in range(CUSTOMERS_COUNT)
-        ]
-        print('Done')
+        # print(f'Inserting {CUSTOMERS_COUNT} customers...', end='')
+        # customers = [
+        #     (factories.CustomerFactory() \
+        #     if (random.random() > 0.3) \
+        #     else factories.CustomerFactory(birth_date=None)) \
+        #     for _ in range(CUSTOMERS_COUNT)
+        # ]
+        # print('Done')
 
         # Generate addresses
-        print(f'Inserting customers addresses...', end='')
-        for customer in customers:
-            factories.AddressFactory(customer_id=customer.id)
-        print('Done')
+        # print(f'Inserting customers addresses...', end='')
+        # for customer in customers:
+        #     factories.AddressFactory(customer_id=customer.id)
+        # print('Done')
 
         # Generate carts
-        print(f'Inserting {CARTS_COUNT} carts...', end='')
-        carts = list()
-        for _ in range(CARTS_COUNT):
-            cart = factories.CartFactory()
-            cart.created_at = datetime(
-                random.randrange(2022, 2023),
-                random.randint(1,12),
-                random.randint(1,12),
-                tzinfo=timezone.utc
-            )
-            cart.save()
-            carts.append(cart)
-        print('Done')
+        # print(f'Inserting {CARTS_COUNT} carts...', end='')
+        # carts = list()
+        # for _ in range(CARTS_COUNT):
+        #     cart = factories.CartFactory()
+        #     cart.created_at = datetime(
+        #         random.randrange(2022, 2023),
+        #         random.randint(1,12),
+        #         random.randint(1,12),
+        #         tzinfo=timezone.utc
+        #     )
+        #     cart.save()
+        #     carts.append(cart)
+        # print('Done')
 
         # Generate cart items
-        print(f'Inserting cart items...', end='')
-        cart_items = list()
-        for cart in carts:
-            random_products = random.sample(products, k=random.randint(1, 10))
-            for product in random_products:
-                cart_item = factories.CartItemFactory(
-                    cart_id=cart.id,
-                    product_id=product.id,
-                )
-                cart_items.append(cart_item)
-        print('Done')
+        # print(f'Inserting cart items...', end='')
+        # cart_items = list()
+        # for cart in carts:
+        #     random_products = random.sample(products, k=random.randint(1, 10))
+        #     for product in random_products:
+        #         cart_item = factories.CartItemFactory(
+        #             cart_id=cart.id,
+        #             product_id=product.id,
+        #         )
+        #         cart_items.append(cart_item)
+        # print('Done')
 
         # Generate orders
-        print(f'Inserting {ORDERS_COUNT} orders...', end='')
-        orders = [
-            factories.OrderFactory(customer_id=random.choice(customers).id) \
-            for _ in range(ORDERS_COUNT)
-        ]
-        for order in orders:
-            order.created_at = datetime(
-                random.randrange(2019, 2023),
-                random.randint(1,12),
-                random.randint(1,12),
-                tzinfo=timezone.utc
-            )
-            order.save()
-        print('Done')
+        # print(f'Inserting {ORDERS_COUNT} orders...', end='')
+        # orders = [
+        #     factories.OrderFactory(customer_id=random.choice(customers).id) \
+        #     for _ in range(ORDERS_COUNT)
+        # ]
+        # for order in orders:
+        #     order.created_at = datetime(
+        #         random.randrange(2019, 2023),
+        #         random.randint(1,12),
+        #         random.randint(1,12),
+        #         tzinfo=timezone.utc
+        #     )
+        #     order.save()
+        # print('Done')
 
         # Generate order items
-        print(f'Inserting order items...', end='')
-        order_items = list()
-        for order in orders:
-            random_products = random.sample(products, random.randint(1, 10))
-            for product in random_products:
-                order_item = factories.OrderItemFactory(
-                    order_id=order.id,
-                    product_id=product.id,
-                    price=product.price
-                )
-                order_items.append(order_item)
-        print('Done')
+        # print(f'Inserting order items...', end='')
+        # order_items = list()
+        # for order in orders:
+        #     random_products = random.sample(products, random.randint(1, 10))
+        #     for product in random_products:
+        #         order_item = factories.OrderItemFactory(
+        #             order_id=order.id,
+        #             product_id=product.id,
+        #             price=product.price
+        #         )
+        #         order_items.append(order_item)
+        # print('Done')
