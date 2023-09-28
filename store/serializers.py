@@ -105,6 +105,12 @@ class CartItemCreateSerializer(serializers.ModelSerializer):
         return cart_item
 
 
+class CartItemUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.CartItem
+        fields = ['quantity']
+
+
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(many=True, read_only=True)
     total = serializers.SerializerMethodField()

@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from django.db.models import Prefetch
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter, SearchFilter
@@ -75,3 +76,19 @@ class CartItemList(generics.ListCreateAPIView):
     def get_serializer_context(self):
         cart_id = self.kwargs['pk']
         return {'cart_id': cart_id}
+
+
+class CartItemDetail(generics.RetrieveUpdateDestroyAPIView):
+    http_method_names = ['get', 'patch', 'delete']
+
+    def get_object(self):
+        cart_item_pk = self.kwargs['cart_item_pk']
+        return get_object_or_404(
+            models.CartItem.objects.select_related('product'),
+            pk=cart_item_pk
+        )
+
+    def get_serializer_class(self):
+        if self.request.method == 'PATCH':
+            return serializers.CartItemUpdateSerializer
+        return serializers.CartItemSerializer
