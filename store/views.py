@@ -103,3 +103,24 @@ class CartItemDetail(generics.RetrieveUpdateDestroyAPIView):
         if self.request.method == 'PATCH':
             return serializers.CartItemUpdateSerializer
         return serializers.CartItemSerializer
+
+
+class OrderList(generics.ListCreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return models.Order.objects.filter(customer__user_id=self.request.user.pk) \
+            .prefetch_related(
+                Prefetch(
+                    'items',
+                    queryset=models.OrderItem.objects.select_related('product')
+                )
+            )
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return serializers.OrderCreateSerializer
+        return serializers.OrderSerializer
+
+    def get_serializer_context(self):
+        return {'user_pk': self.request.user.pk}

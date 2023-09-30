@@ -11,7 +11,7 @@ PRODUCT_PRICE_TAX = 0.09
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Category
-        fields = ['id', 'title']
+        fields = ['pk', 'title']
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -21,7 +21,7 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Product
         fields = [
-            'id', 'title', 'price',
+            'pk', 'title', 'price',
             'price_after_tax', 'category'
         ]
 
@@ -39,7 +39,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Product
         fields = [
-            'id', 'title', 'description', 'price',
+            'pk', 'title', 'description', 'price',
             'price_after_tax', 'category'
         ]
 
@@ -53,7 +53,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Comment
-        fields = ['name', 'body', 'created_at']
+        fields = ['pk', 'name', 'body', 'created_at']
 
     def create(self, validated_data):
         product_slug = self.context['product_slug']
@@ -65,17 +65,22 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class CustomerSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
+    first_name = serializers.CharField(max_length=150, source='user.first_name')
+    last_name = serializers.CharField(max_length=150, source='user.last_name')
+    email = serializers.EmailField(source='user.email')
 
     class Meta:
         model = models.Customer
-        fields = ['user', 'phone_number', 'birth_date']
+        fields = [
+            'pk', 'first_name', 'last_name', 'email',
+            'phone_number', 'birth_date'
+        ]
 
 
 class CartItemProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Product
-        fields = ['id', 'title', 'price']
+        fields = ['pk', 'title', 'price']
 
 
 class CartItemSerializer(serializers.ModelSerializer):
@@ -84,7 +89,7 @@ class CartItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.CartItem
-        fields = ['id', 'quantity', 'product', 'total']
+        fields = ['pk', 'quantity', 'product', 'total']
 
     def get_total(self, cart_item):
         return cart_item.quantity * cart_item.product.price
@@ -126,7 +131,75 @@ class CartSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Cart
-        fields = ['id', 'items', 'total']
+        fields = ['pk', 'items', 'total']
 
     def get_total(self, cart):
         return sum([item.quantity * item.product.price for item in cart.items.all()])
+
+
+class OrderItemProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Product
+        fields = ['pk', 'title']
+
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    product = OrderItemProductSerializer(read_only=True)
+    total = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.OrderItem
+        fields = ['pk', 'product', 'quantity', 'price', 'total']
+
+    def get_total(self, order_item):
+        return order_item.quantity * order_item.price
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True, read_only=True)
+    total = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.Order
+        fields = ['pk', 'status', 'created_at', 'items', 'total']
+        read_only_fields = ['status']
+
+    def get_total(self, order):
+        return sum([item.quantity * item.price for item in order.items.all()])
+
+
+class OrderCreateSerializer(serializers.Serializer):
+    cart_pk = serializers.UUIDField()
+
+    def validate_cart_pk(self, cart_pk):
+        if not models.Cart.objects.filter(pk=cart_pk).exists():
+            raise serializers.ValidationError('Cart with this id does not exist.')
+
+        if models.CartItem.objects.filter(cart_id=cart_pk).count() == 0:
+            raise serializers.ValidationError('Cart is empty.')
+
+        return cart_pk
+
+    def save(self, **kwargs):
+        cart_pk = self.validated_data['cart_pk']
+        user_pk = self.context['user_pk']
+        customer = models.Customer.objects.get(user_id=user_pk)
+
+        order = models.Order()
+        order.customer_id = customer.pk
+        order.save()
+
+        order_items = list()
+        cart_items = models.CartItem.objects.filter(cart_id=cart_pk) \
+            .select_related('product')
+        for cart_item in cart_items:
+            order_item = models.OrderItem()
+            order_item.quantity = cart_item.quantity
+            order_item.price = cart_item.product.price
+            order_item.order_id=order.pk
+            order_item.product_id=cart_item.product_id
+            order_items.append(order_item)
+
+        models.OrderItem.objects.bulk_create(order_items)
+        models.Cart.objects.get(pk=cart_pk).delete()
+        return order

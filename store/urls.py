@@ -6,7 +6,6 @@ app_name = 'store'
 
 urlpatterns = [
     path('categories/', views.CategoryList.as_view(), name='category-list'),
-    path('customers/me/', views.CustomerDetail.as_view(), name='customer-me'),
     path(
         'products/<slug:slug>/comments/',
         views.CommentList.as_view(),
@@ -18,7 +17,7 @@ urlpatterns = [
         name='product-detail'
     ),
     path('products/', views.ProductList.as_view(), name='product-list'),
-
+    path('customers/me/', views.CustomerDetail.as_view(), name='customer-me'),
     path('carts/', views.CartList.as_view(), name='cart-list'),
     path('carts/<uuid:pk>/', views.CartDetail.as_view(), name='cart-detail'),
     path(
@@ -31,4 +30,5 @@ urlpatterns = [
         views.CartItemDetail.as_view(),
         name='cart-item-detail'
     ),
+    path('orders/', views.OrderList.as_view(), name='order-list'),
 ]
