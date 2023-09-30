@@ -63,6 +63,13 @@ class CommentSerializer(serializers.ModelSerializer):
         )
 
 
+class CustomerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Customer
+        fields = ['user', 'phone_number', 'birth_date']
+        read_only_fields = ['user']
+
+
 class CartItemProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Product

@@ -6,6 +6,7 @@ app_name = 'store'
 
 urlpatterns = [
     path('categories/', views.CategoryList.as_view(), name='category-list'),
+    path('customers/me/', views.CustomerDetail.as_view(), name='customer-me'),
     path(
         'products/<slug:slug>/comments/',
         views.CommentList.as_view(),

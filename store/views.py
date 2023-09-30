@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Prefetch
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter, SearchFilter
-from rest_framework import generics
+from rest_framework import generics, permissions
 
 from store import models
 from store import serializers
@@ -43,6 +43,15 @@ class CommentList(generics.ListCreateAPIView):
     def get_serializer_context(self):
         product_slug = self.kwargs['slug']
         return {'product_slug': product_slug}
+
+
+class CustomerDetail(generics.RetrieveUpdateAPIView):
+    serializer_class = serializers.CustomerSerializer
+    queryset = models.Customer.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return models.Customer.objects.get(user_id=self.request.user.id)
 
 
 class CartList(generics.CreateAPIView):
