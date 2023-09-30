@@ -18,7 +18,7 @@ class CategoryList(generics.ListAPIView):
 class ProductList(generics.ListAPIView):
     serializer_class = serializers.ProductSerializer
     queryset = models.Product.objects.select_related('category') \
-            .order_by('-created_at')
+        .order_by('-created_at')
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
     search_fields = ['title']
     filterset_class = ProductFilter
@@ -51,7 +51,8 @@ class CustomerDetail(generics.RetrieveUpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        return models.Customer.objects.get(user_id=self.request.user.id)
+        return models.Customer.objects.select_related('user') \
+            .get(user_id=self.request.user.id)
 
 
 class CartList(generics.CreateAPIView):

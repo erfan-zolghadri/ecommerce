@@ -58,7 +58,7 @@ class StockFilter(admin.SimpleListFilter):
             (StockFilter.BETWEEN_3_AND_10, 'Medium'),
             (StockFilter.GREATER_THAN_10, 'OK')
         ]
-    
+
     def queryset(self, request, queryset):
         if self.value() == StockFilter.LESS_THAN_3:
             return queryset.filter(stock__lt=3)
@@ -223,7 +223,7 @@ class CartItemAdmin(admin.ModelAdmin):
 
     def total(self, cart_item):
         return cart_item.total
-    
+
     def price(self, cart_item):
         return cart_item.product.price
 
@@ -257,7 +257,7 @@ class OrderAdmin(admin.ModelAdmin):
     @admin.display(ordering='total')
     def total(self, order):
         return order.total
-    
+
     @admin.action(description='Set as paid')
     def set_as_paid(self, request, queryset):
         updated_counts = queryset.update(status=models.Order.STATUS_PAID)

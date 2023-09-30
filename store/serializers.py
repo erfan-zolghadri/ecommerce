@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from djoser.serializers import UserSerializer
 from rest_framework import serializers
 
 from store import models
@@ -64,10 +65,11 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class CustomerSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+
     class Meta:
         model = models.Customer
         fields = ['user', 'phone_number', 'birth_date']
-        read_only_fields = ['user']
 
 
 class CartItemProductSerializer(serializers.ModelSerializer):
