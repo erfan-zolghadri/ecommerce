@@ -31,4 +31,5 @@ urlpatterns = [
         name='cart-item-detail'
     ),
     path('orders/', views.OrderList.as_view(), name='order-list'),
+    path('orders/<int:pk>/', views.OrderDetail.as_view(), name='order-detail'),
 ]

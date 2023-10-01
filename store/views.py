@@ -1,13 +1,15 @@
 from django.shortcuts import get_object_or_404
 from django.db.models import Prefetch
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework import generics, permissions
+from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.response import Response
 
 from store import models
 from store import serializers
 from store.filters import ProductFilter
 from store.paginations import DefaultPagination
+from store.signals import order_created
 
 
 class CategoryList(generics.ListAPIView):
@@ -106,6 +108,8 @@ class CartItemDetail(generics.RetrieveUpdateDestroyAPIView):
 
 
 class OrderList(generics.ListCreateAPIView):
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['status']
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
@@ -122,5 +126,29 @@ class OrderList(generics.ListCreateAPIView):
             return serializers.OrderCreateSerializer
         return serializers.OrderSerializer
 
-    def get_serializer_context(self):
-        return {'user_pk': self.request.user.pk}
+    def create(self, request, *args, **kwargs):
+        serializer = serializers.OrderCreateSerializer(
+            data=request.data,
+            context={'user_pk': self.request.user.pk}
+        )
+        serializer.is_valid(raise_exception=True)
+        order = serializer.save()
+
+        order_created.send_robust(sender=self.__class__, order=order)
+
+        order_serializer = serializers.OrderSerializer(order)        
+        return Response(order_serializer.data)
+
+
+class OrderDetail(generics.RetrieveAPIView):
+    serializer_class = serializers.OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return models.Order.objects.filter(customer__user_id=self.request.user.pk) \
+            .prefetch_related(
+                Prefetch(
+                    'items',
+                    queryset=models.OrderItem.objects.select_related('product')
+                )
+            )
